@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+// import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 import dotenv from 'dotenv';
@@ -10,24 +10,16 @@ interface JwtPayload {
   email: string,
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+export const verifyToken = (authHeader?: string): JwtPayload | null => {
+  if (!authHeader) return null;
 
-  if (authHeader) {
-    const token = authHeader.split(' ')[1];
+  const token = authHeader.split(' ')[1];
+  const secretKey = process.env.JWT_SECRET_KEY || '';
 
-    const secretKey = process.env.JWT_SECRET_KEY || '';
-
-    jwt.verify(token, secretKey, (err, user) => {
-      if (err) {
-        return res.sendStatus(403); // Forbidden
-      }
-
-      req.user = user as JwtPayload;
-      return next();
-    });
-  } else {
-    res.sendStatus(401); // Unauthorized
+  try {
+    return jwt.verify(token, secretKey) as JwtPayload;
+  } catch (err) {
+    return null;
   }
 };
 
